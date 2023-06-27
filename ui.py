@@ -1,4 +1,5 @@
 import matplotlib
+
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
@@ -7,9 +8,13 @@ import tkinter as tk
 import analysis as an
 import user_controls as uc
 
+
 class UIProject(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
+        self.geometry("300x375")
+        self.resizable(0, 0)
+
         container = tk.Frame(self)
 
         container.pack(side="top", fill="both", expand=True)
@@ -19,12 +24,12 @@ class UIProject(tk.Tk):
 
         self.frames = {}
 
-        for F in (StartPage, PageOne):
-            frame = F(container, self)
-            self.frames[F] = frame
-            frame.grid(row=0, column=0, sticky="nsew")
+        frame = StartPage(container, self)
+        self.frames[StartPage] = frame
+        frame.grid(row=0, column=0, sticky="nsew")
 
         self.show_frame(StartPage)
+
 
     def show_frame(self, cont):
         frame = self.frames[cont]
@@ -34,55 +39,64 @@ class UIProject(tk.Tk):
 class StartPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="Start Page")
+
+        bottomFrame = Frame(self)
+        bottomFrame.pack(side=BOTTOM, fill=BOTH)
+
+        label = tk.Label(self, text="   Advanced Image Processing")
         label.pack(pady=10, padx=10)
         self.mode = 'Manual Mode'
 
         select_button = tk.Button(self, text="Select File",
                                   command=self.fileselect_button)
-        select_button.pack()
+        select_button.pack(fill=BOTH)
+
         self.manual_button = tk.Button(self, text="Manual Mode", command=self.manual_mode)
-        self.manual_button.pack()
+        self.manual_button.pack(fill=BOTH)
         self.auto_button = tk.Button(self, text="Auto Mode", command=self.auto_mode)
-        self.auto_button.pack()
-        self.setval_button = tk.Button(self, text="press ok to set values", command=self.ok_pressed)
-        self.setval_button.pack()
+        self.auto_button.pack(fill=BOTH)
+        self.setval_button = tk.Button(self, text="Press to Set Values", command=self.ok_pressed)
+        self.setval_button.pack(fill=BOTH)
+        self.pixel_plot = tk.Button(self, text="Plot Data", command=self.draw_pixel_plot)
+        self.pixel_plot.pack(fill=BOTH)
 
-        self.pixelplot0_button = tk.Button(self, text="interpolate nearest pixel", command=self.drawPlotNearest)
-        self.pixelplot0_button.pack(side=TOP, fill=BOTH)
-        
-        self.pixelplot1_button = tk.Button(self, text="interpolate linear", command=self.drawPlotLinear)
-        self.pixelplot1_button.pack(side=TOP, fill=BOTH)
-        
-        self.pixelplot3_button = tk.Button(self, text="interpolate cubic", command=self.drawPlotCubic)
-        self.pixelplot3_button.pack(side=TOP, fill=BOTH)
+        self.pixelplot0_button = tk.Button(self, text="Raw Data", command=self.drawPlotNearest)
+        self.pixelplot0_button.pack(side=LEFT, fill=BOTH)
 
-        self.fft_button = tk.Button(self, text="generate FFT plot(frq v amp)", command=self.drawfft)
-        self.fft_button.pack()
+        self.pixelplot1_button = tk.Button(self, text="Interpolate Linear", command=self.drawPlotLinear)
+        self.pixelplot1_button.pack(side=LEFT, fill=BOTH)
 
-        self.fft_degrees_button = tk.Button(self, text="FFT plot(amplitude at angle(deg)", command=self.draw_deg_fft)
-        self.fft_degrees_button.pack()
+        self.pixelplot3_button = tk.Button(self, text="Interpolate Cubic", command=self.drawPlotCubic)
+        self.pixelplot3_button.pack(side=LEFT, fill=BOTH)
 
-        self.mtf_button = tk.Button(self, text="generate MTF plot", command=self.compute_mtf)
-        self.mtf_button.pack()
+
+        self.fft_button = tk.Button(bottomFrame, text="Generate FFT Plot(frq v amp)", command=self.drawfft)
+        self.fft_button.pack(fill=BOTH)
+
+
+        self.ctf_button = tk.Button(bottomFrame, text="Generate CTF Plot", command=self.plot_ctf)
+        self.ctf_button.pack(fill=BOTH)
 
         self.radiusT = StringVar()
-        radius_label = tk.Label(self, text="Radius").pack(pady=30)
-        self.radius_box = Entry(self, textvariable=self.radiusT, width=25, bg="Lightgreen").place(x=180, y=272)
+        radius_label = tk.Label(bottomFrame, text="Radius:").pack()
+        self.radius_box = Entry(bottomFrame, textvariable=self.radiusT, width=25, bg="Lightgreen").pack()
         self.radiusT.set("0")
         self.radius = int(self.radiusT.get())
 
         self.xT = StringVar()
-        xCenter_label = tk.Label(self, text="X coordinate of pattern center:").pack(pady=0)
-        self.xCenter_box = Entry(self, textvariable=self.xT, width=25, bg="Lightgreen").place(x=180, y=322)
+        xCenter_label = tk.Label(bottomFrame, text="X coordinate of pattern center:").pack()
+        self.xCenter_box = Entry(bottomFrame, textvariable=self.xT, width=25, bg="Lightgreen").pack()
         self.xT.set("0")
         self.x_center = int(self.xT.get())
 
         self.yT = StringVar()
-        yCenter_label = tk.Label(self, text="Y coordinate of pattern center:").pack(pady=30)
-        self.yCenter_box = Entry(self, textvariable=self.yT, width=25, bg="Lightgreen").place(x=180, y=372)
+        yCenter_label = tk.Label(bottomFrame, text="Y coordinate of pattern center:").pack()
+        self.yCenter_box = Entry(bottomFrame, textvariable=self.yT, width=25, bg="Lightgreen").pack()
         self.yT.set("0")
         self.y_center = int(self.yT.get())
+
+        #interpolation mode defaults to cubic spline
+        self.interp = 3
 
     def ok_pressed(self):
         uc.ok_pressed(self)
@@ -103,56 +117,22 @@ class StartPage(tk.Frame):
         uc.fileselect_button(self)
 
     def drawPlotNearest(self):
-        an.drawPlotNearest(self)
+        self.interp = 0
 
     def drawPlotLinear(self):
-        an.drawPlot(self, 1)
-    
+        self.interp = 1
+
     def drawPlotCubic(self):
-        an.drawPlot(self, 3)
+        self.interp = 3
+
+    def draw_pixel_plot(self):
+        an.drawPlot(self, self.interp)
 
     def drawfft(self):
         an.drawfft(self)
 
-    def find_energy(self, ri):
-        an.find_energy(self, ri)
-
-    def find_main_peak(self):
-        an.find_main_peak(self)
-
-    def max_pos(self, list):
-        an.max_pos(self, list)
-
-    def get_fft(self):
-        an.get_fft(self)
-
-    def draw_deg_fft(self):
-        an.draw_deg_fft(self)
-
-    def find_peaks(self):
-        an.find_peaks(self)
-
-    def compute_mtf(self):
-        an.compute_mtf(self)
-
-
-class PageOne(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="Page One")
-        label.pack(pady=10, padx=10)
-
-        button1 = tk.Button(self, text="Back to Start Page",
-                            command=lambda: controller.show_frame(StartPage))
-        button1.pack()
-
-        f = Figure(figsize=(5, 5), dpi=100)
-        a = f.add_subplot(111)
-
-        canvas = FigureCanvasTkAgg(f, self)
-        canvas.draw()
-        canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-
+    def plot_ctf(self):
+        an.plot_ctf(self)
 
 app = UIProject()
 app.mainloop()
