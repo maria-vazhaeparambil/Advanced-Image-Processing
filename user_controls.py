@@ -1,4 +1,3 @@
-
 import numpy as np
 import math
 import cv2
@@ -27,8 +26,9 @@ def ok_pressed(self):
 def manual_mode(self):
     self.mode = 'Manual Mode'
     # print(self.mode)
-    for c in self.patches:
-        c.set_visible(False)
+    if(hasattr(StartPage, 'patches')):
+        for c in self.patches:
+            c.set_visible(False)
     plt.show()
 
 
@@ -140,6 +140,14 @@ def fileselect_button(self):
     self.fig = plt.figure()
     self.ax = self.fig.add_subplot(111)
     self.ax.imshow(self.image, cmap='gray')
+
+    self.radius = 0
+    self.x_center = 0
+    self.y_center = 0
+    self.xT.set(self.x_center)
+    self.yT.set(self.y_center)
+    self.radiusT.set(self.radius)
+
     self.circle = patches.Circle((self.x_center, self.y_center), self.radius, linewidth=1, edgecolor='r',
                                  facecolor='none')
     self.ax.add_patch(self.circle)
